@@ -1,0 +1,7 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.github.dingey.gray.GrayConfiguration,\
+  com.github.dingey.gray.feign.GrayFeignConfiguration,\
+  com.github.dingey.gray.web.GrayWebMvcConfiguration,\
+  com.github.dingey.gray.hystrix.GrayHystrixConcurrencyStrategy,\
+  com.github.dingey.gray.eureka.EurekaConfiguration,\
+  com.github.dingey.gray.nacos.NacosConfiguration
