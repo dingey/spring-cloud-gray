@@ -1,6 +1,6 @@
 # spring cloud 灰度支持
 
-##快速开始
+## 快速开始
 支持eureka和nacos为注册中心的灰度方案
 
 ### 1、引入依赖
@@ -26,7 +26,7 @@ eureka.instance.metadata-map.version: 1.0
 ```
 spring.cloud.nacos.discovery.metadata.version: 1.0
 ```
-eureka也可以通过nacos控制台配置实例的元数据信息
+也可以通过nacos控制台配置实例的元数据信息
 
 ### 3、灰度调用
 请求头里加header字段，带上灰度的版本号
