@@ -21,7 +21,7 @@ public class EurekaServerFilter implements ServerFilter {
         for (Server server : servers) {
             DiscoveryEnabledServer discoveryEnabledServer = (DiscoveryEnabledServer) server;
             String versionMeta = discoveryEnabledServer.getInstanceInfo().getMetadata().get(GrayContext.PREFIX);
-            if ((version == null && StringUtils.isEmpty(versionMeta)) || (Objects.equals(version, versionMeta))) {
+            if ((StringUtils.isEmpty(version) && StringUtils.isEmpty(versionMeta)) || (Objects.equals(version, versionMeta))) {
                 list.add(server);
             }
         }

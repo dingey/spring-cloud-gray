@@ -17,7 +17,9 @@
 ```
 gray:
   enable: true
+  isolation: true
 ```
+isolation是否隔离灰度应用，false下没有版本匹配的实例时会调用所有实例，true没有匹配实例时直接返回503。
 #### 2.2、eureka配置方式
 ```
 eureka.instance.metadata-map.version: 1.0

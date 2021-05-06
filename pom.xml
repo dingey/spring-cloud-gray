@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.github.dingey</groupId>
     <artifactId>spring-cloud-gray</artifactId>
-    <version>0.2.0</version>
+    <version>0.2.1</version>
     <url>https://github.com/dingey/spring-cloud-gray</url>
     <name>spring-cloud-gray</name>
     <description>spring cloud gray</description>

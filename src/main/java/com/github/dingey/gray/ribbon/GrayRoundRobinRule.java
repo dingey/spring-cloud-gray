@@ -8,12 +8,12 @@ import com.netflix.loadbalancer.ILoadBalancer;
 import com.netflix.loadbalancer.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 
-import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -24,9 +24,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class GrayRoundRobinRule extends AbstractLoadBalancerRule {
     private final Logger log = LoggerFactory.getLogger(GrayRoundRobinRule.class);
 
-    @Resource
+    @Autowired
     private GrayProperties grayProperties;
-    @Resource
+    @Autowired
     private ServerFilter serverFilter;
 
     public GrayRoundRobinRule() {
@@ -57,16 +57,17 @@ public class GrayRoundRobinRule extends AbstractLoadBalancerRule {
                 log.debug("符合灰度版本的服务实例有{}个", list.size());
             } else {
                 list = getMatchVersionServers(null);
-                if (!grayProperties.isIsolation() && list.size() == 0) {
-                    list = getLoadBalancer().getAllServers();
-                    log.debug("非灰度版本的服务不存在，加入灰度的实例后有{}个", list.size());
-                } else {
-                    log.debug("非灰度版本的服务实例有{}个", list.size());
-                }
+                log.debug("非灰度版本的服务实例有{}个", list.size());
+            }
+
+            if (list.isEmpty() && !grayProperties.isIsolation()) {
+                log.debug("非隔离状态下，没有匹配的版本服务，调用所有服务");
+                list = getLoadBalancer().getAllServers();
             }
         } else {
             list = getLoadBalancer().getAllServers();
         }
+
         return getRoundRobinServer(list);
     }
 
@@ -113,7 +114,7 @@ public class GrayRoundRobinRule extends AbstractLoadBalancerRule {
     }
 
     private final AtomicInteger nextServerCyclicCounter;
-    private final Map<String, AtomicInteger> nextServerCyclicCounterMap = new ConcurrentHashMap<>();
+    private final Map<String, AtomicInteger> nextServerCyclicCounterMap = new WeakHashMap<>();
 
     private int incrementAndGetModulo(int modulo) {
         int current;

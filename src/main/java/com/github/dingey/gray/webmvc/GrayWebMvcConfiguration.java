@@ -1,4 +1,4 @@
-package com.github.dingey.gray.web;
+package com.github.dingey.gray.webmvc;
 
 import com.github.dingey.gray.GrayContext;
 import org.slf4j.Logger;
