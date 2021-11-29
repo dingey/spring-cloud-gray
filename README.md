@@ -8,7 +8,7 @@
 <dependency>
     <groupId>com.github.dingey</groupId>
     <artifactId>spring-cloud-gray</artifactId>
-    <version>0.2.0</version>
+    <version>0.2.2</version>
 </dependency>
 ```
 ### 2、灰度配置
