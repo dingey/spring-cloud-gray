@@ -4,39 +4,26 @@ import com.github.dingey.gray.GrayContext;
 import com.github.dingey.gray.GrayProperties;
 import com.netflix.client.config.IClientConfig;
 import com.netflix.loadbalancer.AbstractLoadBalancerRule;
-import com.netflix.loadbalancer.ILoadBalancer;
 import com.netflix.loadbalancer.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.StringUtils;
 
 import java.util.List;
-import java.util.Map;
-import java.util.WeakHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 灰度轮询
  *
  * @author d
  */
-public class GrayRoundRobinRule extends AbstractLoadBalancerRule {
-    private final Logger log = LoggerFactory.getLogger(GrayRoundRobinRule.class);
+public class GrayRandomRule extends AbstractLoadBalancerRule {
+    private final Logger log = LoggerFactory.getLogger(GrayRandomRule.class);
 
     @Autowired
     private GrayProperties grayProperties;
     @Autowired
     private ServerFilter serverFilter;
-
-    public GrayRoundRobinRule() {
-        this.nextServerCyclicCounter = new AtomicInteger(0);
-    }
-
-    public GrayRoundRobinRule(ILoadBalancer lb) {
-        this();
-        this.setLoadBalancer(lb);
-    }
 
     @Override
     public Server choose(Object o) {
@@ -72,21 +59,20 @@ public class GrayRoundRobinRule extends AbstractLoadBalancerRule {
     }
 
     private Server getRoundRobinServer(List<Server> allServers) {
-        if (getLoadBalancer() == null) {
-            log.warn("no load balancer");
+        if (allServers == null || allServers.isEmpty()) {
+            log.warn("no server");
             return null;
+        } else if (allServers.size() == 1) {
+            return allServers.get(0);
         } else {
-            Server server = null;
+            Server server;
             int count = 0;
 
             while (true) {
                 if (count++ < 10) {
-                    List<Server> reachableServers = getLoadBalancer().getReachableServers();
-
-                    int upCount = reachableServers.size();
                     int serverCount = allServers.size();
-                    if (upCount != 0 && serverCount != 0) {
-                        int nextServerIndex = this.incrementAndGetModulo(GrayContext.getVersion(), serverCount);
+                    if (serverCount != 0) {
+                        int nextServerIndex = this.chooseRandomInt(serverCount);
                         server = allServers.get(nextServerIndex);
                         if (server == null) {
                             Thread.yield();
@@ -94,8 +80,6 @@ public class GrayRoundRobinRule extends AbstractLoadBalancerRule {
                             if (server.isAlive() && server.isReadyToServe()) {
                                 return server;
                             }
-
-                            server = null;
                         }
                         continue;
                     }
@@ -108,42 +92,13 @@ public class GrayRoundRobinRule extends AbstractLoadBalancerRule {
                     log.warn("No available alive servers after 10 tries from load balancer: " + getLoadBalancer());
                 }
 
-                return server;
+                return null;
             }
         }
     }
 
-    private final AtomicInteger nextServerCyclicCounter;
-    private final Map<String, AtomicInteger> nextServerCyclicCounterMap = new WeakHashMap<>();
-
-    private int incrementAndGetModulo(int modulo) {
-        int current;
-        int next;
-        do {
-            current = this.nextServerCyclicCounter.get();
-            next = (current + 1) % modulo;
-        } while (!this.nextServerCyclicCounter.compareAndSet(current, next));
-
-        return next;
-    }
-
-    private int incrementAndGetModulo(String version, int modulo) {
-        if (StringUtils.isEmpty(version)) {
-            return incrementAndGetModulo(modulo);
-        }
-        AtomicInteger atomicInteger = nextServerCyclicCounterMap.get(version);
-        if (atomicInteger == null) {
-            atomicInteger = new AtomicInteger(0);
-            nextServerCyclicCounterMap.put(version, atomicInteger);
-        }
-        int current;
-        int next;
-        do {
-            current = atomicInteger.get();
-            next = (current + 1) % modulo;
-        } while (!atomicInteger.compareAndSet(current, next));
-
-        return next;
+    protected int chooseRandomInt(int serverCount) {
+        return ThreadLocalRandom.current().nextInt(serverCount);
     }
 
     private List<Server> getMatchVersionServers(String version) {
